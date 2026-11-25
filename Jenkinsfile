@@ -18,9 +18,10 @@ pipeline {
             steps {
                 dir('application') {
                     sh '''
-                        rm -rf .venv
+                        if [ ! -d ".venv" ]; then
                         python3 -m venv .venv
-                        .venv/bin/python -m pip install --upgrade pip
+                        fi
+
                         .venv/bin/python -m pip install -r requirements.txt
                     '''
                 }
