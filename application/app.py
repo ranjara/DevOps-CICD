@@ -1,4 +1,3 @@
-
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 
@@ -21,8 +20,12 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(json.dumps(response).encode())
 
-server = HTTPServer(("0.0.0.0", 5000), Handler)
 
-print("Application running on port 5000")
+def run_server():
+    server = HTTPServer(("0.0.0.0", 5000), Handler)
+    print("Application running on port 5000")
+    server.serve_forever()
 
-server.serve_forever()
+
+if __name__ == "__main__":
+    run_server()
