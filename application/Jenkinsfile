@@ -1,0 +1,88 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKERHUB_USERNAME = 'ranjara'
+        IMAGE_NAME = 'ranjara/cicd-demo'
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                dir('application') {
+                    sh '''
+                        rm -rf .venv
+                        python3 -m venv .venv
+                        .venv/bin/python -m pip install --upgrade pip
+                        .venv/bin/python -m pip install -r requirements.txt
+                    '''
+                }
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                dir('application') {
+                    sh '.venv/bin/python -m pytest -v'
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    env.IMAGE_TAG = sh(
+                        script: 'git rev-parse --short HEAD',
+                        returnStdout: true
+                    ).trim()
+                }
+
+                dir('application') {
+                    sh '''
+                        docker build \
+                          -t ${IMAGE_NAME}:${IMAGE_TAG} .
+                    '''
+                }
+            }
+        }
+
+        stage('Docker Hub Login') {
+            steps {
+                withCredentials([string(
+                    credentialsId: 'dockerhub-token',
+                    variable: 'DOCKER_PASS'
+                )]) {
+                    sh '''
+                        echo "$DOCKER_PASS" | docker login \
+                          -u "$DOCKERHUB_USERNAME" \
+                          --password-stdin
+                    '''
+                }
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                sh '''
+                    docker push ${IMAGE_NAME}:${IMAGE_TAG}
+                '''
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'CI pipeline completed successfully!'
+        }
+        failure {
+            echo 'CI pipeline failed. Check Jenkins console output.'
+        }
+    }
+}
