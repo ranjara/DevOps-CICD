@@ -21,7 +21,7 @@ spec:
     spec:
       containers:
         - name: cicd-demo
-          image: IMAGE_PLACEHOLDER
+          image: ranjara/cicd-demo:7987296
           imagePullPolicy: IfNotPresent
 
           ports:
